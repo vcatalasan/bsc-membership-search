@@ -66,7 +66,7 @@ class BSC_Membership_Search
         // CREATE NEW VIEW
         $query = "CREATE VIEW $table_name AS SELECT a.user_id, b.user_status, b.user_login, b.user_email";
         foreach ($fields as $field_id => $field_name) {
-            $query .= sprintf(', GROUP_CONCAT(if(field_id=%s,value,NULL)) as %s', $field_id, $field_name);
+            $query .= sprintf(", GROUP_CONCAT(if(field_id=%d,value,NULL)) as '%.64s'", $field_id, $field_name);
         }
         $query .= sprintf(' FROM %s AS a LEFT JOIN %s AS b ON (a.user_id = b.ID) GROUP BY user_id', $bp->profile->table_name_data, $wpdb->prefix . 'users');
         return $wpdb->query($query);
@@ -82,11 +82,23 @@ class BSC_Membership_Search
             $query = "SELECT id, name FROM {$bp->profile->table_name_fields} WHERE parent_id = 0";
             $records = $wpdb->get_results($query);
             foreach ($records as $record)
-                $fields[$record->id] = strtolower(preg_replace("![^a-z0-9]+!i", "_", $record->name));
+                $fields[$record->id] = $this->camel_case($record->name);
         }
         return $fields;
     }
 
+    function camel_case($str, array $noStrip = [])
+    {
+        // non-alpha and non-numeric characters are removed
+        $str = preg_replace('/[^a-z0-9' . implode("", $noStrip) . ']+/i', '', $str);
+        $str = trim($str);
+        // uppercase the first character of each word
+        $str = ucwords($str);
+        $str = str_replace(" ", "", $str);
+        $str = lcfirst($str);
+
+        return $str;
+    }
 }
 
 ?>
