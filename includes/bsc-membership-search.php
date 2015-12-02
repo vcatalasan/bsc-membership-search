@@ -89,8 +89,8 @@ class BSC_Membership_Search
 
     function camel_case($str, array $noStrip = [])
     {
-        // non-alpha and non-numeric characters are removed
-        $str = preg_replace('/[^a-z0-9' . implode("", $noStrip) . ']+/i', '', $str);
+        // non-alpha and non-numeric characters are converted to spaces
+        $str = preg_replace('/[^a-z0-9' . implode("", $noStrip) . ']+/i', ' ', $str);
         $str = trim($str);
         // uppercase the first character of each word
         $str = ucwords($str);
