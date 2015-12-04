@@ -7,6 +7,9 @@ class BSC_Membership_Search
 
     function __construct()
     {
+        // prevent program from continuing if not ready
+        if (!self::$settings['program']['ready']) return;
+
         self::register_shortcodes();
         self::register_callbacks();
         self::register_scripts_stylesheets();

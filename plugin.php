@@ -38,26 +38,29 @@ class BSC_Membership_Search_Plugin extends BSC_Membership_Search
 	    // program basename and dir
         self::$settings['program'] = array(
             'activation' => get_option( 'bsc_membership_search_plugin_activation' ),
+            'ready' => $this->required_plugins_active(),
             'basename' => plugin_basename(__FILE__),
             'dir_path' => plugin_dir_path(__FILE__),
             'dir_url' => plugin_dir_url(__FILE__)
         );
 
-        parent::__construct();
-
         add_action('admin_init', array($this, 'activation'));
+
+        parent::__construct();
     }
 
 	function required_plugins_active()
 	{
 		$status = true;
-		foreach ($this->required_plugins as $name => $plugin) {
+        include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+        foreach ($this->required_plugins as $name => $plugin) {
 			if (is_plugin_active($plugin)) continue;
-			?>
-			<div class="error">
-				<p>BSC Membership Search plugin requires <strong><?php echo $name ?></strong> plugin to be installed and activated</p>
-			</div>
-			<?php
+
+            if (is_admin()) { ?>
+                <div class="error">
+                    <p>BSC Membership Search plugin requires <strong><?php echo $name ?></strong> plugin to be installed and activated</p>
+                </div>
+			<?php }
 			$status = false;
 		}
 		return $status;
@@ -66,7 +69,7 @@ class BSC_Membership_Search_Plugin extends BSC_Membership_Search
 	function activation()
     {
         if (self::$settings['program']['activation']) {
-            $this->required_plugins_active() ? $this->export_membership_table() : deactivate_plugins( plugin_basename( self::$settings['program']['activation'] ) );
+            self::$settings['program']['ready'] and $this->export_membership_table();
             delete_option( 'bsc_membership_search_plugin_activation' );
         }
     }
