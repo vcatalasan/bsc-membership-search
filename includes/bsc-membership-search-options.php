@@ -1,4 +1,6 @@
 <?php
+include "bsc-membership-search-init.php";
+
 class BSC_Membership_Search_Options {
 
 	function __construct() {
@@ -50,5 +52,6 @@ class BSC_Membership_Search_Options {
 			</div>
 		</div>
 		<?php
+		new BSC_Membership_Search_Init();
 	}
 }
