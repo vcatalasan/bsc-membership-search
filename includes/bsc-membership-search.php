@@ -1,4 +1,5 @@
 <?php
+include "bsc-membership-search-options.php";
 
 class BSC_Membership_Search
 {
@@ -13,6 +14,8 @@ class BSC_Membership_Search
         self::register_shortcodes();
         self::register_callbacks();
         self::register_scripts_stylesheets();
+
+        new BSC_Membership_Search_Options();
     }
 
     //__________________________________________________________________________________________________________________
@@ -40,7 +43,9 @@ class BSC_Membership_Search
             $update[ $fields[ $field_id ]['name'] ] = $new_values[ $field_id ]['value'];
         }
 
-        $this->sendPost('http://10.10.10.47:3000/api/profiles', $update);
+        $api_enabled = get_option('directory_api_enabled');
+        $api_endpoint = get_option('directory_api_endpoint');
+        $api_enabled and $this->sendPost($api_endpoint, $update);
     }
 
     // use PHP streams API to send data
@@ -86,6 +91,7 @@ class BSC_Membership_Search
     {
         add_action('admin_enqueue_scripts', array($this, 'custom_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'custom_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'custom_stylesheets'));
         add_action('wp_enqueue_scripts', array($this, 'custom_stylesheets'));
         add_action('wp_print_styles', array($this, 'custom_print_styles'), 100);
     }
@@ -96,6 +102,7 @@ class BSC_Membership_Search
 
     function custom_stylesheets()
     {
+        wp_enqueue_style('directory-search-style', self::$settings['program']['dir_url'] . 'style.css');
     }
 
     function custom_print_styles()
