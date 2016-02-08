@@ -50,8 +50,10 @@ class BSC_Membership_Search_Options {
 					</form>
 				</div>
 			</div>
+			<div class="row">
+				<?php new BSC_Membership_Search_Init(); ?>
+			</div>
 		</div>
 		<?php
-		new BSC_Membership_Search_Init();
 	}
 }

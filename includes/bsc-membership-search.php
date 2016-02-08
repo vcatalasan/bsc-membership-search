@@ -29,7 +29,7 @@ class BSC_Membership_Search
         add_action('xprofile_fields_saved_field', array($this, 'export_membership_table'));
         add_action('xprofile_fields_deleted_field', array($this, 'export_membership_table'));
         add_action('xprofile_updated_profile', array($this, 'xprofile_updated_profile'), 10, 5);
-
+        add_action('update_directory_search', array($this, 'update_directory_search'), 10, 1);
 
         add_filter('bps_request_data', array($this, 'search_form'), 10, 1);
     }
@@ -43,9 +43,13 @@ class BSC_Membership_Search
             $update[ $fields[ $field_id ]['name'] ] = $new_values[ $field_id ]['value'];
         }
 
+        do_action('update_directory_search', $update);
+    }
+
+    function update_directory_search($profile) {
         $api_enabled = get_option('directory_api_enabled');
         $api_endpoint = get_option('directory_api_endpoint');
-        $api_enabled and $this->sendPost($api_endpoint, $update);
+        $api_enabled and $this->sendPost($api_endpoint, $profile);
     }
 
     // use PHP streams API to send data
@@ -87,6 +91,7 @@ class BSC_Membership_Search
         error_log(print_r($content,true));
         return $content;
     }
+
     function register_scripts_stylesheets()
     {
         add_action('admin_enqueue_scripts', array($this, 'custom_scripts'));
