@@ -16,6 +16,10 @@ class BSC_Membership_Search_Init {
 			<hr />
 			<p>Export Membership Profiles to Directory Search Service</p>
 			<form id="sync-directory-search" method="post">
+				<div class="form-group">
+					<input type="checkbox" class="form-control" id="replace" name="replace" checked="checked" /><label for="replace">Replace existing record (defaults to update)</label>
+				</div>
+				<br />
 				<input type="hidden" name="wp_nonce" value="<?php echo $wp_nonce ?>" />
 				<input type="hidden" name="p" value="1" />
 				<input id="start-directory-sync" type="submit" value="Start Export" />

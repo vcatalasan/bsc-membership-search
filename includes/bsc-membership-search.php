@@ -32,6 +32,7 @@ class BSC_Membership_Search
         add_action('update_directory_search', array($this, 'update_directory_search'), 10, 1);
 
         add_filter('bps_request_data', array($this, 'search_form'), 10, 1);
+        add_filter('bsc_membership_fields', array($this, 'bsc_membership_fields'));
     }
 
     function xprofile_updated_profile($user_id, $field_ids, $errors, $old_values, $new_values) {
@@ -115,6 +116,9 @@ class BSC_Membership_Search
         wp_deregister_style('wp-admin');
     }
 
+    function bsc_membership_fields() {
+        return $this->bp_get_profile_fields();
+    }
 
     // Create BSC Membership Table from BuddyPress xprofile fields data
 

@@ -1,3 +1,7 @@
 #directory-api-endpoint {
     width: 30em;
 }
+.profile-fields th,
+.profile-fields td {
+    text-align: left;
+}

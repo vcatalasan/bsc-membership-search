@@ -36,6 +36,17 @@ class BSC_Membership_Search_Options {
 	function  settings_page() {
 		$url = $this->get_option('directory_api_endpoint', 'http://localhost/api/profiles');
 		$api_enabled = $this->get_option('directory_api_enabled', false);
+
+		$fields = apply_filters('bsc_membership_fields');
+		$field_names = function(array $field) {
+			return $field['name'];
+		};
+		$search_exports = $this->get_option('search_exports', array_flip(array_map($field_names, $fields)));
+		$search_keywords = $this->get_option('search_keywords', array());
+
+		$checked = function($a, array $b) {
+			if (in_array($a, $b)) return 'checked="checked"';
+		}
 		?>
 		<div class="wrap">
 			<h1>Directory Search Settings</h1>
@@ -48,6 +59,24 @@ class BSC_Membership_Search_Options {
 							<input class="form-control" id="directory-api-endpoint" type="text" name="directory_api_endpoint" value="<?php echo $url ?>" />
 						</div>
 						<br />
+						<?php // profile fields
+						echo '
+						<table class="profile-fields">
+							<tr><th>Field ID</th><th>Name</th><th>Type</th><th>Export</th><th>Keyword</th></tr>
+						';
+						foreach ($fields as $id => $field) {
+							echo '
+						<tr>
+							<td>' . $id . '</td>
+							<td>' . $field['name'] . '</td>
+							<td>' . $field['type'] . '</td>
+							<td><input name="search_exports[' . $field['name'] . ']" type="checkbox" ' . $checked($field['name'], array_keys($search_exports)) . ' /></td>
+							<td><input name="search_keywords[' . $field['name'] . ']" type="checkbox" ' . $checked($field['name'], array_keys($search_keywords)) . '/></td>
+						</tr>';
+						}
+						echo '</table><br />';
+						?>
+
 						<input class="form-control btn btn-primary" type="submit" name="save_settings" value="Save Settings" />
 					</form>
 				</div>
