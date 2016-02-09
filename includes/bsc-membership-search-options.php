@@ -4,6 +4,8 @@ include "bsc-membership-search-init.php";
 class BSC_Membership_Search_Options {
 
 	function __construct() {
+		new BSC_Membership_Search_Init();
+
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 	}
 
@@ -51,7 +53,7 @@ class BSC_Membership_Search_Options {
 				</div>
 			</div>
 			<div class="row">
-				<?php new BSC_Membership_Search_Init(); ?>
+				<?php  do_action('display_search_init_form'); ?>
 			</div>
 		</div>
 		<?php

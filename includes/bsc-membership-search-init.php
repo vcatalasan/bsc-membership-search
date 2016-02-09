@@ -1,8 +1,11 @@
 <?php
+define('PROFILES_PER_PAGE', 10);
+
 class BSC_Membership_Search_Init {
 
 	function __construct() {
-		add_action( 'wp_ajax_update_directory_search', array($this, 'update_directory_search' ) );
+		add_action('wp_ajax_update_directory_search', array($this, 'update_directory_search'));
+		add_action('display_search_init_form', array($this, 'display_form'));
 	}
 
 	function display_form() {
@@ -10,32 +13,46 @@ class BSC_Membership_Search_Init {
 		$wp_nonce = wp_create_nonce( $current_user->user_email );
 		?>
 		<div class="container">
+			<hr />
+			<p>Export Membership Profiles to Directory Search Service</p>
 			<form id="sync-directory-search" method="post">
 				<input type="hidden" name="wp_nonce" value="<?php echo $wp_nonce ?>" />
 				<input type="hidden" name="p" value="1" />
-				<input id="start-directory-sync" type="submit" value="Start Directory Sync" />
+				<input id="start-directory-sync" type="submit" value="Start Export" />
 			</form>
-			<div id="display-result"></div>
+			<div id="profiles-list"></div>
 		</div>
 		<script src="http://malsup.github.com/jquery.form.js"></script>
 		<script type="text/javascript">
 			jQuery(document).ready( function($) {
-
+				var page = $("#sync-directory-search input[name=p]");
+				var form = $("#sync-directory-search");
+				var profilesList = $("#profiles-list");
+				var total_count = 0;
 				var options = {
 					data: { action: 'update_directory_search' },
 					url: "<?php echo admin_url( 'admin-ajax.php'); ?>?XDEBUG_SESSION_START=PHPSTORM",
 					success: function( responseText, statusText, xhr, $form ) {
-						if ( responseText ) {
+						if ( responseText.length > 0 ) {
 							var response = jQuery.parseJSON( responseText );
-							$("#display-result").html( responseText );
+							var list = "<ol start=" + (total_count + 1) + " >";
+							for (var i in response.profiles) {
+								list += "<li>" + JSON.stringify(response.profiles[i]) + "</li>";
+								total_count++;
+							}
+							list += "</ol>";
+							response.eof && (list += "<p>All done!</p>");
+							profilesList.html(list);
+							page.attr('value', 1 + parseInt(page.attr('value')));
+							!response.eof && form.ajaxSubmit( options );
 						}
 					}
 				};
 
-
 				$('#start-directory-sync').click( function(e) {
 					e.preventDefault();
-					$('#sync-directory-search').ajaxSubmit( options );
+					form.ajaxSubmit( options );
+					$(this).hide();
 				});
 
 			})
@@ -45,7 +62,7 @@ class BSC_Membership_Search_Init {
 
 	function get_records($table, $page = null, $items_per_page = null) {
 		global $wpdb;
-		static $current_page = 1, $current_items_per_page = 10;  // default values
+		static $current_page = 1, $current_items_per_page = PROFILES_PER_PAGE;  // default values
 
 		$page and $current_page = $page;
 		$items_per_page and $current_items_per_page;
@@ -59,30 +76,33 @@ class BSC_Membership_Search_Init {
 	function update_directory_search() {
 		global $current_user;
 
-		if ( ! wp_verify_nonce( $_GET['wp_nonce'], $current_user->user_email )) exit;
+		if ( ! wp_verify_nonce( $_POST['wp_nonce'], $current_user->user_email )) exit;
 
 		$page = 1;
-		if(!empty($_GET['p'])) {
-			$page = filter_input(INPUT_GET, 'p', FILTER_VALIDATE_INT);
+		if(!empty($_POST['p'])) {
+			$page = filter_input(INPUT_POST, 'p', FILTER_VALIDATE_INT);
 			if(false === $page) {
 				$page = 1;
 			}
 		}
 		$next = $page + 1;
-		echo '<ol class="container">';
-		//do {
-			$rs = $this->get_records( 'bsc_membership', $page );
-			foreach ($rs as $r) {
-				$profile = $this->cleanupData($r);
-				$profile->user_id = intval($r->user_id);
-				$profile->user_status = intval($r->user_status);
-				echo "<li>" . print_r(json_encode($profile),true) . "</li>";
+		$rs = $this->get_records( 'bsc_membership', $page );
+		$result = array(
+			'eof' => true,
+			'count' => 0,
+			'profiles' => array()
+		);
+		foreach ($rs as $r) {
+			$profile = $this->cleanupData($r);
+			$profile->user_id = intval($r->user_id);
+			$profile->user_status = intval($r->user_status);
+			$result['profiles'][] = $profile;
 
-				//do_action('update_directory_search', $profile);
-			}
-		//} while (count($rs));
-		echo '</ol>';
-		echo '<a href="' . strtok("${_SERVER['REQUEST_URI']}",'?') . '?page=directory_search_settings&p=' . $next . '">Next Page</a>';
+			do_action('update_directory_search', $profile);
+		}
+		$result['count'] = count($result['profiles']);
+		$result['eof'] = $result['count'] < PROFILES_PER_PAGE;  // items per page
+		echo json_encode($result);
 		exit;
 	}
 
@@ -94,14 +114,14 @@ class BSC_Membership_Search_Init {
 				if(gettype($propVal) === "object") {
 					$cObj = $this->cleanupData($propVal);
 					if($cObj === null) {
-						// stripped null value
+						// strip out null value
 						unset($obj->$propName);
 					} else {
 						$obj->$propName = $cObj;
 					}
 				} else {
 					if(is_null($propVal)) {
-						// stripped null value
+						// strip out null value
 						unset($obj->$propName);
 					} elseif (is_serialized($propVal)) {
 						// unserialize data
