@@ -14,7 +14,7 @@ class BSC_Membership_Search_Init {
 		?>
 		<div class="container">
 			<hr />
-			<p>Export Membership Profiles to Directory Search Service</p>
+			<p><strong>Export Membership Profiles to Directory Search Service</strong></p>
 			<form id="sync-directory-search" method="post">
 				<div class="form-group">
 					<input type="checkbox" class="form-control" id="replace" name="replace" checked="checked" /><label for="replace">Replace existing record (defaults to update)</label>
@@ -97,7 +97,7 @@ class BSC_Membership_Search_Init {
 			'profiles' => array()
 		);
 		foreach ($rs as $r) {
-			$profile = $this->cleanupData($r);
+			$profile = apply_filters('clean_up_data', $r);
 			$profile->user_id = intval($r->user_id);
 			$profile->user_status = intval($r->user_status);
 			$result['profiles'][] = $profile;
@@ -108,34 +108,5 @@ class BSC_Membership_Search_Init {
 		$result['eof'] = $result['count'] < PROFILES_PER_PAGE;  // items per page
 		echo json_encode($result);
 		exit;
-	}
-
-	function cleanupData($obj) {
-		$objVars = get_object_vars($obj);
-
-		if(count($objVars) > 0) {
-			foreach($objVars as $propName => $propVal) {
-				if(gettype($propVal) === "object") {
-					$cObj = $this->cleanupData($propVal);
-					if($cObj === null) {
-						// strip out null value
-						unset($obj->$propName);
-					} else {
-						$obj->$propName = $cObj;
-					}
-				} else {
-					if(is_null($propVal)) {
-						// strip out null value
-						unset($obj->$propName);
-					} elseif (is_serialized($propVal)) {
-						// unserialize data
-						$obj->$propName = unserialize($propVal);
-					}
-				}
-			}
-		} else {
-			return null;
-		}
-		return $obj;
 	}
 }

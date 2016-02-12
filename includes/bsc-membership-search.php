@@ -33,6 +33,7 @@ class BSC_Membership_Search
 
         add_filter('bps_request_data', array($this, 'search_form'), 10, 1);
         add_filter('bsc_membership_fields', array($this, 'bsc_membership_fields'));
+        add_filter('clean_up_data', array($this, 'clean_up_data'), 10, 1);
     }
 
     function xprofile_updated_profile($user_id, $field_ids, $errors, $old_values, $new_values) {
@@ -44,13 +45,76 @@ class BSC_Membership_Search
             $update[ $fields[ $field_id ]['name'] ] = $new_values[ $field_id ]['value'];
         }
 
-        do_action('update_directory_search', $update);
+        do_action('update_directory_search', apply_filters('clean_up_data', (object)$update));
     }
 
     function update_directory_search($profile) {
         $api_enabled = get_option('directory_api_enabled');
         $api_endpoint = get_option('directory_api_endpoint');
         $api_enabled and $this->sendPost($api_endpoint, $profile);
+    }
+
+    function clean_up_data(stdClass $obj) {
+        $objVars = get_object_vars($obj);
+
+        if(count($objVars) > 0) {
+
+            $search_exports = BSC_Membership_Search::$settings['search']['search_exports'];
+            $search_keywords = BSC_Membership_Search::$settings['search']['search_keywords'];
+
+
+            foreach($objVars as $propName => $propVal) {
+                if(gettype($propVal) === "object") {
+                    $cObj = $this->clean_up_data($propVal);
+                    if($cObj === null) {
+                        // strip out null value
+                        unset($obj->$propName);
+                    } else {
+                        $obj->$propName = $cObj;
+                    }
+                } else {
+                    if(is_null($propVal)) {
+                        // strip out null value
+                        unset($obj->$propName);
+                    } elseif (is_serialized($propVal)) {
+                        // unserialize data
+                        $obj->$propName = unserialize($propVal);
+                    }
+                    // process only exported properties
+                    if (in_array($propName, $search_exports)) {
+                        in_array($propName, $search_keywords) and $obj->$propName = $this->array_flatten($this->keywords($obj->$propName));
+                    } else {
+                        unset($obj->$propName);
+                    }
+                }
+            }
+        } else {
+            return null;
+        }
+        return $obj;
+    }
+
+    function keywords($obj) {
+        $keywords = $obj;
+        if (!is_array($keywords)) {
+            $keywords = explode( ' ', trim(
+                preg_replace( '/ +/', ' ', preg_replace( '/[^A-Za-z0-9 ]/', ' ', urldecode( html_entity_decode( strip_tags( $obj ) ) ) ) )
+            ) );
+        }
+        return count($keywords) > 1 ?
+            array_map(array($this, 'keywords'), $keywords) : ucwords(strtolower($obj));
+    }
+
+    function array_flatten($array) {
+        $result = array();
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result = array_merge($result, $this->array_flatten($value));
+            } else {
+                $result[] = $value;
+            }
+        }
+        return $result;
     }
 
     // use PHP streams API to send data
@@ -117,7 +181,12 @@ class BSC_Membership_Search
     }
 
     function bsc_membership_fields() {
-        return $this->bp_get_profile_fields();
+        $fields = $this->bp_get_profile_fields();
+        $fields['[1]'] = array('name' =>'user_id', 'type' => 'integer');
+        $fields['[2]'] = array('name' => 'user_status', 'type' => 'integer');
+        $fields['[3]'] = array('name' => 'user_login', 'type' => 'text');
+        $fields['[4]'] = array('name' => 'user_email', 'type' => 'text');
+        return $fields;
     }
 
     // Create BSC Membership Table from BuddyPress xprofile fields data
