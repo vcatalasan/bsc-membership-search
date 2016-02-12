@@ -97,7 +97,8 @@ class BSC_Membership_Search_Init {
 			'profiles' => array()
 		);
 		foreach ($rs as $r) {
-			$result['profiles'][] = apply_filters('clean_up_data', $r);
+			$profile = apply_filters('clean_up_data', $r);
+			$result['profiles'][] = $profile;
 
 			do_action('update_directory_search', $profile);
 		}
