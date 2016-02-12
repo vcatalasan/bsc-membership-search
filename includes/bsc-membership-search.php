@@ -29,7 +29,7 @@ class BSC_Membership_Search
         add_action('xprofile_fields_saved_field', array($this, 'export_membership_table'));
         add_action('xprofile_fields_deleted_field', array($this, 'export_membership_table'));
         add_action('xprofile_updated_profile', array($this, 'xprofile_updated_profile'), 10, 5);
-        add_action('update_directory_search', array($this, 'update_directory_search'), 10, 1);
+        add_action('update_directory_search', array($this, 'update_directory_search'), 10, 2);
 
         add_filter('bps_request_data', array($this, 'search_form'), 10, 1);
         add_filter('bsc_membership_fields', array($this, 'bsc_membership_fields'));
@@ -45,12 +45,13 @@ class BSC_Membership_Search
             $update[ $fields[ $field_id ]['name'] ] = $new_values[ $field_id ]['value'];
         }
 
-        do_action('update_directory_search', apply_filters('clean_up_data', (object)$update));
+        do_action('update_directory_search', apply_filters('clean_up_data', (object)$update), $user_id);
     }
 
-    function update_directory_search($profile) {
+    function update_directory_search($profile, $id = null) {
         $api_enabled = get_option('directory_api_enabled');
         $api_endpoint = get_option('directory_api_endpoint');
+        $id and $api_endpoint .= "/$id";
         $api_enabled and $this->sendPost($api_endpoint, $profile);
     }
 

@@ -97,6 +97,8 @@ class BSC_Membership_Search_Init {
 			'profiles' => array()
 		);
 		foreach ($rs as $r) {
+			$r->user_id = intval($r->user_id);
+			$r->user_status = intval($r->user_status);
 			$profile = apply_filters('clean_up_data', $r);
 			$result['profiles'][] = $profile;
 
