@@ -181,7 +181,7 @@ class BSC_Membership_Search
         wp_deregister_style('wp-admin');
     }
 
-    function bsc_membership_fields() {
+    function bsc_membership_fields($fields) {
         $fields = $this->bp_get_profile_fields();
         $fields['[1]'] = array('name' =>'user_id', 'type' => 'integer');
         $fields['[2]'] = array('name' => 'user_status', 'type' => 'integer');

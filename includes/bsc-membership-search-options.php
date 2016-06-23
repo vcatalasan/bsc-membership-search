@@ -24,7 +24,7 @@ class BSC_Membership_Search_Options {
 	}
 
 	function load_settings() {
-		$fields = apply_filters('bsc_membership_fields');
+		$fields = apply_filters('bsc_membership_fields', null);
 		$field_names = function(array $field) {
 			return $field['name'];
 		};
