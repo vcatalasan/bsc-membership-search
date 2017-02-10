@@ -26,7 +26,7 @@ class BSC_Membership_Search_Init {
 			</form>
 			<div id="profiles-list"></div>
 		</div>
-		<script src="https://malsup.github.com/jquery.form.js"></script>
+		<script src="https://malsup.github.io/jquery.form.js"></script>
 		<script type="text/javascript">
 			jQuery(document).ready( function($) {
 				var page = $("#sync-directory-search input[name=p]");
